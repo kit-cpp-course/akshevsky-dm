@@ -1,26 +1,26 @@
-#include "Filter.h"
-#include "audio.h"
+#include "WAVfile.h"
 #include <iostream>
 #include <vector>
-
+#include <string>
+#include <sstream> 
 
 using std::vector;
 using namespace AudioFilter;
 
-int main(void) {
-	Audio audio;
-	audio.open("test.wav");
-
-	vector<double> data;
-	data.reserve(audio.signLength());
-	for (unsigned int i = 0; i < audio.signLength(); i++) {
-		data.push_back(audio[i]);
+int main(int argc, char *argv[]) {
+	if (argc == 1) {
+		std::cerr << "Enter input and output files and  filtration type " << std::endl;
+		return 0;
 	}
-	KIHfilter flt(44100, 20, 50);
-	flt.filtering(&data);
-
-	for (unsigned int i = 0; i < audio.signLength(); i++) {
-		audio[i] = data[i];
+	int params[3];
+	for (int i = 1; i < 4; i++) {
+		std::stringstream convert(argv[i]);
+		if (!(convert >> params[i]))         // делаем конвертацию
+			return 0;                        // если конвертация терпит неудачу, то выходим
 	}
-	audio.save("out.wav");
+	WAVfile audio;
+	audio.open;
+	audio.filtering(params[1], (Type)params[2], (weightFunc)params[3]);
+	audio.save(argv[5]);
+	return 1;
 }

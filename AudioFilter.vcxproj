@@ -115,12 +115,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="audio.h" />
+    <ClInclude Include="WAVfile.h" />
     <ClInclude Include="Filter.h" />
-    <ClInclude Include="signal.h" />
+    <ClInclude Include="audio.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="audio.cpp" />
+    <ClCompile Include="WAVfile.cpp" />
     <ClCompile Include="KIHfilter.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>

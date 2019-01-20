@@ -1,56 +1,83 @@
 #pragma once
 
+#include "Filter.h"
+#include <iostream>
+#include <vector>
 
-#include "signal.h"
-#include <fstream>
-
-/*класс аудио, наследуемый от сигнала. В данном случае является представлением
-WAVE файла в программе (при необходимости можно добавить классы, организующие
-представления других форматов)*/
-
-class Audio : public Signal < double >
+/*Класс, представляющий собой обощенное представление аудиосигнала*/
+template<class T> class Audio
 {
 public:
+	typedef std::vector<T> Samples; //определяем вектор значений как тип Samples
 
-	// Структура WAVE заголовка
-	typedef struct {
-		unsigned int   id;       // "fmt "
-		unsigned int   bytes;    // fmt chunk bytes
-		unsigned short formatID; // format ID
-		unsigned short channels; // channel number
-		unsigned int   rate;     // sampling rate
-		unsigned int   velocity; // data velocity
-		unsigned short blocksize;// block size
-		unsigned short bits;     // quantization bit number
-	} fmtChunk;
-	// WAVE data chunk
-	typedef struct {
-		unsigned int id;       // "data"
-		unsigned int bytes;    // signal data bytes
-	} dataChunk;
-	// WAVE file(RIFF) header
-	typedef struct {
-		unsigned int riffID; // "riff"
-		unsigned int size_8; // file size-8
-		unsigned int wavID;  // "WAVE"
-		fmtChunk fmtchunk;
-		dataChunk datachunk;
-	} WaveFileHeader;
 
-	std::string filename;
+protected:
+	std::size_t smpFreq;     // частота дискретизации
+	std::size_t qntBit;      // "глубина звучания"
+	std::size_t length;      // длина сигнала
+	Samples     samples;     // сэмплы 
+	AudioFilter::Filter* correntFilter; //фильтр,которому делегируется функция фильтрования
 
 public:
+	//конструкторы
 
-	// конструкторы
-	Audio(void);
-	Audio(std::size_t spFreq, std::size_t qBit, std::size_t length);
-	Audio(const Audio &audio);
-	Audio &operator=(const Audio &audio);
+	//по умолчанию
+	Audio()
+		: smpFreq(0), qntBit(0), length(0)
+	{
+		samples.clear();
+	}
+	//параметризованный конструктор 
+	Audio(std::size_t smpFreq, std::size_t qntBit, std::size_t length)
+		: smpFreq(smpFreq), qntBit(qntBit), length(length)
+	{
+		samples.resize(length);
+	}
+
+	//конструктор копирования
+	Audio(const Audio<T> &signal){
+		smpFreq = signal.smpFreq;
+		qntBit = signal.qntBit;
+		length = signal.length;
+		samples = signal.samples;
+	}
+	//конструктор присваивания
+	Audio<T> &operator=(const Audio<T> &signal) {
+		smpFreq = signal.smpFreq;
+		qntBit = signal.qntBit;
+		length = signal.length;
+		samples = signal.samples;
+		return (*this);
+	}
 	//деструктор
-	~Audio(void);
+	~Audio() {}
 
+	//функия изменяющая свойства аудиосигнала
+	void chnangeProperties(std::size_t smpFreq_, std::size_t qntBit_, std::size_t length_) {
+		smpFreq = smpFreq_;
+		qntBit = qntBit_;
+		length = length_;
+		samples.resize(length_);
+	}
+	//Перегрузка оператора [] для работы с сэмплами
+	T operator[](std::size_t n) const {return samples[n];}
+	T &operator[](std::size_t n) {return samples[n];}
 
-	int open(const std::string &filename);//открыть аудиофайл
-	int save(const std::string &filename);//сохранить аудиофайл
+	//методы, возвращающие характеристики объекта
+	std::size_t signFreq() const{return smpFreq;} //возвращает частоту дискретизации
 
-}; 
+	std::size_t signBit() const {return qntBit;}//возвращает "глубину" звучания
+
+	std::size_t signLength() const {return length;}//возвращает длину сигнала
+
+	Samples signSamples() const{return samples;}//возвращает сэмплы
+
+    /*метод, фильрующий аудиофайл и делегирующий фильтрацию специальному классу Filter
+	N - длина фильтра
+	Fs - частота полосы пропускания
+	FilterType - тип фильтра 
+    windFunc - оконная функция */
+	
+	int filtering( long double Fs, AudioFilter::Type FilterType, AudioFilter::weightFunc windFunc);
+};
+
